@@ -1,0 +1,10 @@
+{
+  "name": "42-reset",
+  "version": "1.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/cleaner.test.js",
+    "pack": "python3 scripts/package.py"
+  }
+}

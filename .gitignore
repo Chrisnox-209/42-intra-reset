@@ -1,0 +1,15 @@
+# Generated files and dependencies
+/node_modules/
+/dist/
+__pycache__/
+*.py[cod]
+
+# Local tool configuration
+/.agents/
+/.codex/
+/.aws/
+
+# Operating system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
