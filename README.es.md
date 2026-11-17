@@ -6,10 +6,11 @@
 
 A veces tu perfil de 42 no se abre. Borrar los datos del sitio en el navegador puede ayudar a que vuelva a funcionar.
 
-42 Reset lo hace con un clic para estos dos sitios:
+42 Reset lo hace con un clic para estas páginas:
 
 - [La Intra de 42](https://intra.42.fr/)
 - [El perfil de 42](https://profile.intra.42.fr/)
+- [El nuevo perfil de 42](https://profile-v3.intra.42.fr/)
 
 El navegador guarda archivos para cargar las páginas más rápido. Estos archivos se llaman **caché**. También guarda pequeños datos llamados **cookies**, que pueden servir para mantener tu sesión abierta.
 
@@ -40,7 +41,7 @@ Si aparece un **!** en el botón, la limpieza no ha terminado correctamente. Col
 
 ## ¿Qué se borra?
 
-La extensión borra las cookies, la caché y otros datos que estos dos sitios han guardado en tu navegador.
+La extensión borra las cookies, la caché y otros datos que estos sitios han guardado en tu navegador.
 
 Esto puede cerrar tu sesión en la Intra y en otros servicios de 42 que comparten las mismas cookies. También pueden olvidarse algunos ajustes del sitio.
 

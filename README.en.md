@@ -6,10 +6,11 @@
 
 Sometimes your 42 profile will not open. Clearing the website’s data in your browser can help it work again.
 
-42 Reset does this in one click for these two websites:
+42 Reset does this in one click for these pages:
 
 - [42 Intra](https://intra.42.fr/)
 - [42 profile](https://profile.intra.42.fr/)
+- [The new 42 profile](https://profile-v3.intra.42.fr/)
 
 Your browser saves files to load pages faster. These saved files are called the **cache**. It also saves small pieces of information called **cookies**, which can help keep you signed in.
 
@@ -40,7 +41,7 @@ If a **!** appears on the button, the cleanup did not finish properly. Hold your
 
 ## What does it delete?
 
-The extension clears cookies, cache, and other data that these two websites saved in your browser.
+The extension clears cookies, cache, and other data that these websites saved in your browser.
 
 This may sign you out of the Intra and other 42 services that share the same cookies. Some website settings may also be forgotten.
 

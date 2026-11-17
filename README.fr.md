@@ -6,10 +6,11 @@
 
 Parfois, ton profil 42 ne s’ouvre plus. Effacer les données du site dans le navigateur peut aider à le faire fonctionner à nouveau.
 
-42 Reset fait ce nettoyage en un clic pour ces deux sites :
+42 Reset fait ce nettoyage en un clic pour ces pages :
 
 - [L’Intra 42](https://intra.42.fr/)
 - [Le profil 42](https://profile.intra.42.fr/)
+- [Le nouveau profil 42](https://profile-v3.intra.42.fr/)
 
 Le navigateur garde des fichiers pour afficher les pages plus vite : c’est le **cache**. Il garde aussi de petites informations, appelées **cookies**, qui peuvent servir à te garder connecté.
 
@@ -40,7 +41,7 @@ Si un **!** apparaît sur le bouton, le nettoyage n’est pas terminé correctem
 
 ## Qu’est-ce qui est effacé ?
 
-L’extension efface les cookies, le cache et les autres données que ces deux sites ont enregistrées dans ton navigateur.
+L’extension efface les cookies, le cache et les autres données que ces sites ont enregistrées dans ton navigateur.
 
 Cela peut te déconnecter de l’Intra et d’autres services 42 qui utilisent les mêmes cookies. Certains réglages du site peuvent aussi être oubliés.
 
