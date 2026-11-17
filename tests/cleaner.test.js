@@ -1,9 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { cleanIntra, clearCookies, cookieRemovalDetails, isTargetCookie, isTargetUrl, ORIGINS } from "../cleaner.js";
+import { readFileSync } from "node:fs";
+import { cleanIntra, clearCookies, cookieRemovalDetails, isTargetCookie, isTargetUrl, HOSTS, MATCHES, ORIGINS } from "../cleaner.js";
 
 const cookie = (overrides = {}) => ({
   domain: "profile.intra.42.fr", hostOnly: true, name: "session", path: "/", storeId: "0", ...overrides,
+});
+
+test("le profil v3 et ses fichiers sont inclus dans tout le nettoyage", () => {
+  const host = "profile-v3.intra.42.fr";
+  assert.ok(HOSTS.includes(host));
+  assert.ok(MATCHES.includes(`*://${host}/*`));
+  assert.ok(ORIGINS.includes(`https://${host}`));
+  assert.ok(ORIGINS.includes(`http://${host}`));
+  assert.equal(isTargetUrl(`https://${host}/assets/index-1b63b24c.js`), true);
+  assert.equal(isTargetCookie(cookie({ domain: host })), true);
+  assert.equal(cookieRemovalDetails(cookie({ domain: host })).url, `https://${host}/`);
+  assert.equal(isTargetUrl(`https://${host}.example.org/`), false);
+  assert.equal(isTargetCookie(cookie({ domain: `other.${host}` })), false);
+});
+
+test("le manifeste autorise tous les hôtes que le nettoyage prend en charge", () => {
+  const manifest = JSON.parse(readFileSync(new URL("../manifest.json", import.meta.url), "utf8"));
+  assert.deepEqual(manifest.host_permissions.sort(), [...MATCHES].sort());
 });
 
 test("les URL proches, ports et protocoles étrangers restent exclus", () => {
@@ -15,8 +34,8 @@ test("les URL proches, ports et protocoles étrangers restent exclus", () => {
   }
 });
 
-test("seuls les cookies utilisables par les deux hôtes sont ciblés", () => {
-  for (const entry of [cookie(), cookie({ domain: ".42.fr", hostOnly: false }), cookie({ domain: ".intra.42.fr", hostOnly: false })]) {
+test("seuls les cookies utilisables par les hôtes de l’Intra sont ciblés", () => {
+  for (const entry of [cookie(), cookie({ domain: "profile-v3.intra.42.fr" }), cookie({ domain: ".42.fr", hostOnly: false }), cookie({ domain: ".intra.42.fr", hostOnly: false })]) {
     assert.equal(isTargetCookie(entry), true);
   }
   for (const entry of [cookie({ domain: "42.fr" }), cookie({ domain: "other.42.fr" }), cookie({ domain: ".api.intra.42.fr", hostOnly: false }), cookie({ domain: "intra.42.fr.evil.test" })]) {
@@ -32,10 +51,10 @@ test("la suppression conserve chemin, magasin et partition sans viser le site pa
   assert.throws(() => cookieRemovalDetails(cookie({ domain: "other.42.fr" })));
 });
 
-function mockApi({ failStorage = false, failCookies = false, changeTab = false, failInjection = false } = {}) {
+function mockApi({ failStorage = false, failCookies = false, changeTab = false, failInjection = false, targetUrl = "https://profile.intra.42.fr/users/me" } = {}) {
   const events = [];
   let cookies = [cookie(), cookie({ domain: ".42.fr", hostOnly: false }), cookie({ domain: "other.42.fr" })];
-  let current = { id: 7, url: "https://profile.intra.42.fr/users/me", status: "complete", incognito: false };
+  let current = { id: 7, url: targetUrl, status: "complete", incognito: false };
   let reads = 0;
   const listener = () => ({ addListener() {}, removeListener() {} });
   const api = {
@@ -96,6 +115,16 @@ test("nettoyage limité aux origines, pages suspendues avant suppression puis ro
   assert.deepEqual(Object.keys(storage.types).sort(), ["cache", "cacheStorage", "fileSystems", "indexedDB", "localStorage", "serviceWorkers", "webSQL"].sort());
   assert.equal(remaining()[0].domain, "other.42.fr");
   assert.equal(events.at(-1).url, "https://profile.intra.42.fr/users/me");
+});
+
+test("un onglet du profil v3 est nettoyé et rouvert à son adresse d’origine", async () => {
+  const targetUrl = "https://profile-v3.intra.42.fr/users/me";
+  const { api, events } = mockApi({ targetUrl });
+  const result = await cleanIntra(api);
+  assert.equal(result.state, "success");
+  assert.equal(result.tabsReopened, 1);
+  assert.ok(events.find((event) => event.type === "storage").options.origins.includes("https://profile-v3.intra.42.fr"));
+  assert.equal(events.at(-1).url, targetUrl);
 });
 
 test("une erreur de cache n’empêche pas les cookies ni la réouverture", async () => {

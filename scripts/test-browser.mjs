@@ -37,7 +37,7 @@ try {
   await context.route("**/*", (route) => {
     const url = new URL(route.request().url());
     if (url.protocol === "chrome-extension:") return route.continue();
-    if (["intra.42.fr", "profile.intra.42.fr", "other.42.fr", "example.org"].includes(url.hostname)) {
+    if (["intra.42.fr", "profile.intra.42.fr", "profile-v3.intra.42.fr", "other.42.fr", "example.org"].includes(url.hostname)) {
       return route.fulfill({ contentType: "text/html", body: "<!doctype html><html><title>Test local 42 Reset</title><body>Fixture locale, sans réseau.</body></html>" });
     }
     return route.abort();
@@ -55,16 +55,28 @@ try {
   assert.deepEqual(actionState, { popup: "", clickHandler: true });
   const intra = await context.newPage();
   const target = await context.newPage();
+  const targetV3 = await context.newPage();
   const unrelated = await context.newPage();
   await intra.goto("https://intra.42.fr/");
   await target.goto("https://profile.intra.42.fr/users/me");
+  await targetV3.goto("https://profile-v3.intra.42.fr/users/me");
   await unrelated.goto("https://other.42.fr/");
-  for (const page of [intra, target, unrelated]) {
+  for (const page of [intra, target, targetV3, unrelated]) {
     await page.evaluate(async () => {
       localStorage.setItem("test-local", "present");
       sessionStorage.setItem("test-session", "present");
       const cache = await caches.open("test-cache");
       await cache.put("/test-resource", new Response("cached"));
+      if (location.hostname === "profile-v3.intra.42.fr") {
+        // The regression: the old app shell points to a JS file that now
+        // returns HTML. These v3 cache entries used to survive every cleanup.
+        await cache.put("/", new Response('<script type="module" src="/assets/index-1b63b24c.js"></script>', {
+          headers: { "Content-Type": "text/html" },
+        }));
+        await cache.put("/assets/index-1b63b24c.js", new Response("<!doctype html><title>42 | Profile</title>", {
+          headers: { "Content-Type": "text/html" },
+        }));
+      }
       await new Promise((resolve, reject) => {
         const request = indexedDB.open("test-db", 1);
         request.onupgradeneeded = () => request.result.createObjectStore("test-store");
@@ -79,6 +91,8 @@ try {
     { name: "same", value: "test", domain: ".intra.42.fr", path: "/", secure: true },
     { name: "same", value: "test", domain: ".42.fr", path: "/", secure: true },
     { name: "path", value: "test", domain: "profile.intra.42.fr", path: "/users", secure: true },
+    { name: "v3-host", value: "test", url: "https://profile-v3.intra.42.fr/", httpOnly: true, secure: true },
+    { name: "v3-path", value: "test", domain: "profile-v3.intra.42.fr", path: "/users", secure: true },
     { name: "keep-sibling", value: "test", url: "https://other.42.fr/" },
     { name: "keep-parent", value: "test", url: "https://42.fr/" },
     { name: "keep-external", value: "test", url: "https://example.org/" },
@@ -86,6 +100,10 @@ try {
   await worker.evaluate(async () => {
     await chrome.cookies.set({
       url: "https://profile.intra.42.fr/", name: "partitioned", value: "test", secure: true,
+      sameSite: "no_restriction", partitionKey: { topLevelSite: "https://example.org", hasCrossSiteAncestor: true },
+    });
+    await chrome.cookies.set({
+      url: "https://profile-v3.intra.42.fr/", name: "v3-partitioned", value: "test", secure: true,
       sameSite: "no_restriction", partitionKey: { topLevelSite: "https://example.org", hasCrossSiteAncestor: true },
     });
   });
@@ -111,7 +129,7 @@ try {
     return job;
   });
   assert.equal(result.state, "success", JSON.stringify(result));
-  assert.equal(result.tabsReopened, 2);
+  assert.equal(result.tabsReopened, 3);
   assert.equal(context.pages().length, pagesBefore, "Aucun nouvel onglet ne doit être ouvert.");
   const iconState = await worker.evaluate(async () => {
     const finishedLength = globalThis.testIconUpdates.length;
@@ -131,9 +149,11 @@ try {
   assert.match(iconState.title, /terminé/);
   await target.waitForURL("https://profile.intra.42.fr/users/me");
   await target.waitForLoadState();
+  await targetV3.waitForURL("https://profile-v3.intra.42.fr/users/me");
+  await targetV3.waitForLoadState();
   await intra.waitForURL("https://intra.42.fr/");
   await intra.waitForLoadState();
-  for (const page of [intra, target]) {
+  for (const page of [intra, target, targetV3]) {
     const data = await page.evaluate(async () => ({
       local: localStorage.length, session: sessionStorage.length,
       caches: await caches.keys(), databases: (await indexedDB.databases()).map((db) => db.name),
