@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
   "name": "42 Reset — Débloquer l’Intra",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Un clic pour effacer les cookies et le cache de l’Intra 42, puis rouvrir ses pages.",
   "minimum_chrome_version": "132",
   "permissions": ["browsingData", "cookies", "scripting", "storage"],
   "host_permissions": [
     "*://intra.42.fr/*",
-    "*://profile.intra.42.fr/*"
+    "*://profile.intra.42.fr/*",
+    "*://profile-v3.intra.42.fr/*"
   ],
   "background": {
     "service_worker": "background.js",

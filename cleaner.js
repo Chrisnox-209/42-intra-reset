@@ -1,4 +1,8 @@
-export const HOSTS = Object.freeze(["intra.42.fr", "profile.intra.42.fr"]);
+export const HOSTS = Object.freeze([
+  "intra.42.fr",
+  "profile.intra.42.fr",
+  "profile-v3.intra.42.fr",
+]);
 export const ORIGINS = Object.freeze(
   HOSTS.flatMap((host) => [`https://${host}`, `http://${host}`]),
 );
